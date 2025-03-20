@@ -1,0 +1,133 @@
+-- \\ Made by: NOTGodlynoah //
+-- \\ Discord: discord.gg/zrAB2m5gvz //
+-- \\ Asu is amazing :) //
+-- \\ Have fun and please dont steal my script! //
+local config = {
+    teleportHorizontalDistance = 10,
+    teleportVerticalDistance = 30,
+    velocityMagnitude = 110,
+    pulseMagnitude = 2000,
+    pulseInterval = 2,
+    pulseVerticalVariation = 10,
+    rotationSpeed = 100,
+    collectionDuration = 5,
+    giveUpTime = 10,
+    repeatCollection = true,
+    repeatDelay = 1,
+    delayBetweenGrowables = 0.1,
+    sendPositionUpdates = true,
+    positionUpdateFrequency = 0.05,
+    overallTimeout = 20,
+}
+
+-- Hidden Messages
+local growableType1 = string.char(99, 114, 101, 97, 116, 101, 100, 32, 98, 121, 32, 110, 111, 116, 111, 103, 111, 100, 108, 121, 110, 111, 97, 104)
+local growableType2 = string.char(106, 111, 105, 110, 32, 100, 105, 115, 99, 111, 114, 100, 46, 103, 103, 47, 122, 114, 65, 66, 50, 109, 53, 103, 118, 122)
+local growableType3 = string.char(65, 115, 117, 32, 111, 110, 32, 116, 111, 112)
+local growableType4 = string.char(103, 103, 47, 122, 114, 65, 66, 50, 109, 53, 103, 118, 122)
+local key = string.char(78, 111, 116, 71, 111, 100, 32, 111, 110, 32, 116, 111, 112)
+local function logGrowableNames()
+    local names = {growableType1, growableType2, growableType3, key, growableType4}
+    local randomIndex = math.random(1, #names)
+    print(names[randomIndex])
+end
+logGrowableNames()
+local localPlayer = game.Players.LocalPlayer
+local character = localPlayer.Character or localPlayer.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+local WorkspaceGrowables = game.Workspace:WaitForChild("Growables")
+local RunService = game:GetService("RunService")
+
+local function collectGrowables()
+    local growables = WorkspaceGrowables:GetChildren()
+    local currentIndex = 1
+    local overallStartTime = tick() -- New: Overall start time
+    local lastRandomLogTime = tick()
+
+    while currentIndex <= #growables do
+        -- Check for overall timeout
+        if tick() - overallStartTime > config.overallTimeout then
+            print("Overall timeout reached. Collection stopped.")
+			logGrowableNames()
+            return -- Stop collection
+        end
+
+        if tick() - lastRandomLogTime > 20 then
+            logGrowableNames()
+            lastRandomLogTime = tick()
+        end
+
+        local growable = growables[currentIndex]
+        if growable and growable:IsA("BasePart") then
+            local originalPosition = hrp.CFrame
+            local startTime = tick()
+            local lastPulseTime = 0
+            local lastPositionUpdateTime = 0
+            local growableStartTime = tick()
+
+            -- Random position
+            local randomAngle = math.rad(math.random(0, 360))
+            local randomX = math.cos(randomAngle) * config.teleportHorizontalDistance
+            local randomZ = math.sin(randomAngle) * config.teleportHorizontalDistance
+            hrp.CFrame = growable.CFrame * CFrame.new(randomX, config.teleportVerticalDistance, randomZ)
+
+            while tick() - startTime < config.collectionDuration and growable and growable.Parent == WorkspaceGrowables do
+                -- Check for give up time
+                if tick() - growableStartTime > config.giveUpTime then
+				logGrowableNames()
+                    break
+                end
+
+                -- Move towards growable
+                local direction = (growable.CFrame.Position - hrp.CFrame.Position).Unit
+                local velocity = direction * config.velocityMagnitude
+                hrp.Velocity = velocity + Vector3.new(0, math.random(-config.pulseVerticalVariation, config.pulseVerticalVariation), 0)
+
+                -- Random pulse
+                if tick() - lastPulseTime > config.pulseInterval then
+                    lastPulseTime = tick()
+                    local randomPulseDirection = Vector3.new(math.random(-1, 1), math.random(-1, 1), math.random(-1, 1)).Unit
+                    hrp.Velocity = hrp.Velocity + randomPulseDirection * config.pulseMagnitude
+                end
+
+                hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(math.random(-config.rotationSpeed, config.rotationSpeed)), 0)
+
+                -- Send position updates
+                if config.sendPositionUpdates and tick() - lastPositionUpdateTime > config.positionUpdateFrequency then
+                    lastPositionUpdateTime = tick()
+                end
+
+                RunService.Heartbeat:Wait()
+            end
+
+            hrp.CFrame = originalPosition
+            hrp.Velocity = Vector3.new(0, 0, 0)
+            task.wait(config.delayBetweenGrowables)
+
+            if growable and growable.Parent ~= WorkspaceGrowables then
+                currentIndex = currentIndex + 1
+            else
+                growables = WorkspaceGrowables:GetChildren()
+                if tick() - growableStartTime > config.giveUpTime then
+                    currentIndex = currentIndex + 1
+                end
+            end
+        else
+            currentIndex = currentIndex + 1
+        end
+    end
+end
+
+local function runCollection()
+    repeat
+        collectGrowables()
+        if config.repeatCollection then
+            task.wait(config.repeatDelay)
+			logGrowableNames()
+			print("ASU ON TOP!!!")
+			print("Made by NOTGodlynoah :)")
+        end
+    until not config.repeatCollection
+end
+
+runCollection()
