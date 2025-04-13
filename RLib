@@ -1,0 +1,117 @@
+-- Made by NOTGodlynoah
+local rlib = {}
+local rs = game:GetService("RunService")
+local plr = game.Players.LocalPlayer
+
+function rlib.tppos(v3)
+    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+        plr.Character.HumanoidRootPart.CFrame = CFrame.new(v3)
+    end
+end
+
+function rlib.rot(x,y,z)
+    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = plr.Character.HumanoidRootPart
+        hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(math.rad(x), math.rad(y), math.rad(z))
+    end
+end
+
+function rlib.tp(target)
+    local targetPlr = game.Players:FindFirstChild(target)
+    if targetPlr and targetPlr.Character and targetPlr.Character:FindFirstChild("HumanoidRootPart") then
+        rlib.tppos(targetPlr.Character.HumanoidRootPart.Position)
+    end
+end
+
+function rlib.copypos(msg)
+    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+        local pos = plr.Character.HumanoidRootPart.Position
+        if setclipboard then
+            setclipboard(tostring(pos))
+            print(msg:gsub("-1-", tostring(pos)))
+        end
+    end
+end
+
+function rlib.rotvel(rx,ry,rz)
+    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+        local gyro = plr.Character.HumanoidRootPart:FindFirstChild("rlib_gyro") or Instance.new("BodyGyro")
+        gyro.Name = "rlib_gyro"
+        gyro.P = 10000
+        gyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+        gyro.CFrame = CFrame.Angles(math.rad(rx), math.rad(ry), math.rad(rz))
+        gyro.Parent = plr.Character.HumanoidRootPart
+    end
+end
+
+function rlib.moveto(pos, speed, timeout)
+    local start = tick()
+    local char = plr.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    
+    local bv = Instance.new("BodyVelocity")
+    bv.Velocity = Vector3.new()
+    bv.MaxForce = Vector3.new(math.huge,0,math.huge)
+    bv.Parent = char.HumanoidRootPart
+    
+    while tick() - start < timeout do
+        local hrp = char.HumanoidRootPart
+        local dir = (pos - hrp.Position).Unit
+        bv.Velocity = dir * speed
+        if (pos - hrp.Position).Magnitude < 2 then break end
+        rs.Heartbeat:Wait()
+    end
+    bv:Destroy()
+end
+
+local noclipCon
+function rlib.noclip(ass)
+    if ass then
+        noclipCon = rs.Stepped:Connect(function()
+            if plr.Character then
+                for _,v in pairs(plr.Character:GetDescendants()) do
+                    if v:IsA("BasePart") and v.CanCollide then
+                        v.CanCollide = false
+                    end
+                end
+            end
+        end)
+    else
+        if noclipCon then
+            noclipCon:Disconnect()
+            noclipCon = nil
+        end
+    end
+end
+
+function rlib.speed(s)
+    if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+        plr.Character.Humanoid.WalkSpeed = s
+    end
+end
+
+function rlib.jump(pwr)
+    if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+        plr.Character.Humanoid.JumpPower = pwr
+    end
+end
+
+function rlib.givetool(toolName)
+    local tool = game:GetService("InsertService"):LoadAsset(tonumber(toolName:match("%d+")))
+    if tool then
+        tool.Parent = plr.Backpack
+    end
+end
+
+function rlib.destroytools()
+    for _,v in pairs(plr.Backpack:GetChildren()) do
+        if v:IsA("Tool") then v:Destroy() end
+    end
+    if plr.Character then
+        for _,v in pairs(plr.Character:GetChildren()) do
+            if v:IsA("Tool") then v:Destroy() end
+        end
+    end
+end
+
+return rlib
