@@ -301,9 +301,10 @@ function rlib.chatlog(state)
 end
 
 function rlib.webhook(txt, url)
-    -- Placeholder: send HTTP POST to webhook
+    -- Placeholder: needs hooking chat events
 end
 
+-- Info & Utility
 function rlib.copypos()
     local root = getRoot(LocalPlayer.Character)
     if root then setclipboard(tostring(root.Position)) end
