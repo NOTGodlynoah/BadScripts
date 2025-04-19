@@ -1,115 +1,411 @@
--- Made by NOTGodlynoah
+-- rlib by NOTGodlynoah
 local rlib = {}
-local rs = game:GetService("RunService")
-local plr = game.Players.LocalPlayer
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
 
-function rlib.tppos(v3)
-    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-        plr.Character.HumanoidRootPart.CFrame = CFrame.new(v3)
-    end
+-- Internal state for certain features
+rlib._dflingConn = nil
+rlib._dflingActive = false
+rlib._dflingOrigPos = nil
+rlib._dflingOrigVel = nil
+rlib._dflingSpin = nil
+rlib._dflingTargetTracker = nil
+rlib._dflingVelBurst = nil
+
+-- Helper: get root part
+local function getRoot(char)
+    return char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso"))
 end
 
-function rlib.rot(x,y,z)
-    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-        local hrp = plr.Character.HumanoidRootPart
-        hrp.CFrame = CFrame.new(hrp.Position) * CFrame.Angles(math.rad(x), math.rad(y), math.rad(z))
-    end
+-- Movement & Position
+function rlib.tppos(pos)
+    local root = getRoot(LocalPlayer.Character)
+    if root then root.CFrame = CFrame.new(pos) end
 end
 
-function rlib.tp(target)
-    local targetPlr = game.Players:FindFirstChild(target)
-    if targetPlr and targetPlr.Character and targetPlr.Character:FindFirstChild("HumanoidRootPart") then
-        rlib.tppos(targetPlr.Character.HumanoidRootPart.Position)
-    end
-end
-
-function rlib.copypos(msg)
-    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-        local pos = plr.Character.HumanoidRootPart.Position
-        if setclipboard then
-            setclipboard(tostring(pos))
-            print(msg:gsub("-1-", tostring(pos)))
+function rlib.tp(username)
+    for _,plr in ipairs(Players:GetPlayers()) do
+        if plr.Name:lower():sub(1, #username) == username:lower() then
+            local theirRoot = getRoot(plr.Character)
+            if theirRoot then rlib.tppos(theirRoot.Position) end
+            break
         end
-    end
-end
-
-function rlib.rotvel(rx,ry,rz)
-    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-        local gyro = plr.Character.HumanoidRootPart:FindFirstChild("rlib_gyro") or Instance.new("BodyGyro")
-        gyro.Name = "rlib_gyro"
-        gyro.P = 10000
-        gyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-        gyro.CFrame = CFrame.Angles(math.rad(rx), math.rad(ry), math.rad(rz))
-        gyro.Parent = plr.Character.HumanoidRootPart
     end
 end
 
 function rlib.moveto(pos, speed, timeout)
+    local root = getRoot(LocalPlayer.Character)
+    if not root then return end
     local start = tick()
-    local char = plr.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-    
-    local bv = Instance.new("BodyVelocity")
-    bv.Velocity = Vector3.new()
-    bv.MaxForce = Vector3.new(math.huge,0,math.huge)
-    bv.Parent = char.HumanoidRootPart
-    
-    while tick() - start < timeout do
-        local hrp = char.HumanoidRootPart
-        local dir = (pos - hrp.Position).Unit
-        bv.Velocity = dir * speed
-        if (pos - hrp.Position).Magnitude < 2 then break end
-        rs.Heartbeat:Wait()
+    while (root.Position - pos).Magnitude > 3 and (not timeout or tick() - start < timeout) do
+        local dir = (pos - root.Position).Unit
+        root.CFrame = root.CFrame + dir * (speed or 16) * RunService.Heartbeat:Wait()
     end
-    bv:Destroy()
 end
 
-local noclipCon
-function rlib.noclip(ass)
-    if ass then
-        noclipCon = rs.Stepped:Connect(function()
-            if plr.Character then
-                for _,v in pairs(plr.Character:GetDescendants()) do
-                    if v:IsA("BasePart") and v.CanCollide then
-                        v.CanCollide = false
-                    end
-                end
+function rlib.follow(username, seconds)
+    local target = nil
+    for _,plr in ipairs(Players:GetPlayers()) do
+        if plr.Name:lower():sub(1, #username) == username:lower() then
+            target = plr
+            break
+        end
+    end
+    if not target then return end
+    local start = tick()
+    while tick() - start < (seconds or 10) do
+        local theirRoot = getRoot(target.Character)
+        if theirRoot then rlib.tppos(theirRoot.Position + Vector3.new(0,2,0)) end
+        RunService.Heartbeat:Wait()
+    end
+end
+
+function rlib.pathwalk(points, speed)
+    for _,pos in ipairs(points) do
+        rlib.moveto(pos, speed)
+    end
+end
+
+function rlib.noclip(state)
+    local char = LocalPlayer.Character
+    if not char then return end
+    for _,v in ipairs(char:GetDescendants()) do
+        if v:IsA("BasePart") then v.CanCollide = not state end
+    end
+end
+
+function rlib.lockplayer(state)
+    local char = LocalPlayer.Character
+    if not char then return end
+    for _,v in ipairs(char:GetDescendants()) do
+        if v:IsA("BasePart") then v.Anchored = state end
+    end
+end
+
+function rlib.antiVoid(state, safePos)
+    if state then
+        rlib._antivoidConn = RunService.Heartbeat:Connect(function()
+            local root = getRoot(LocalPlayer.Character)
+            if root and root.Position.Y < -10 then
+                root.CFrame = CFrame.new(safePos or Vector3.new(0,10,0))
             end
         end)
-    else
-        if noclipCon then
-            noclipCon:Disconnect()
-            noclipCon = nil
+    elseif rlib._antivoidConn then
+        rlib._antivoidConn:Disconnect()
+        rlib._antivoidConn = nil
+    end
+end
+
+function rlib.setvel(vec)
+    local root = getRoot(LocalPlayer.Character)
+    if root then root.Velocity = vec end
+end
+
+function rlib.novel(t)
+    local root = getRoot(LocalPlayer.Character)
+    if not root then return end
+    local stop = tick() + (t or 1)
+    while tick() < stop do
+        root.Velocity = Vector3.new()
+        RunService.Heartbeat:Wait()
+    end
+end
+
+-- Character & Physics
+function rlib.rot(x,y,z)
+    local root = getRoot(LocalPlayer.Character)
+    if root then root.CFrame = root.CFrame * CFrame.Angles(math.rad(x or 0), math.rad(y or 0), math.rad(z or 0)) end
+end
+
+function rlib.rotvel(x,y,z)
+    local root = getRoot(LocalPlayer.Character)
+    if root then root.RotVelocity = Vector3.new(x or 0, y or 0, z or 0) end
+end
+
+function rlib.fling(power)
+    local root = getRoot(LocalPlayer.Character)
+    if root then
+        local bv = Instance.new("BodyVelocity")
+        bv.Velocity = Vector3.new(power or 5000, 0, 0)
+        bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+        bv.P = 1e5
+        bv.Parent = root
+        task.wait(0.2)
+        bv:Destroy()
+    end
+end
+
+function rlib.jump()
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")
+    if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+end
+
+function rlib.sit()
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")
+    if hum then hum.Sit = true end
+end
+
+function rlib.anim(id)
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")
+    if hum then
+        local anim = Instance.new("Animation")
+        anim.AnimationId = "rbxassetid://"..tostring(id)
+        local track = hum:LoadAnimation(anim)
+        track:Play()
+    end
+end
+
+function rlib.reset()
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")
+    if hum then hum.Health = 0 end
+end
+
+function rlib.antiRagdoll(state)
+    local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")
+    if hum then hum.PlatformStand = not state end
+end
+
+-- Player Stats
+function rlib.walkspeed(v) local h=LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")if h then h.WalkSpeed=v end end
+function rlib.ws(v) rlib.walkspeed(v) end
+function rlib.jumppower(v) local h=LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")if h then h.JumpPower=v end end
+function rlib.jp(v) rlib.jumppower(v) end
+function rlib.grav(v) workspace.Gravity=v end
+function rlib.fpslimit(v) setfpscap(v) end
+function rlib.fps() return math.floor(1/RunService.RenderStepped:Wait()) end
+function rlib.ping() return LocalPlayer:GetNetworkPing() or 0 end
+
+-- Tools & Inventory
+function rlib.givetool(toolName)
+    for _,v in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
+        if v:IsA("Tool") and v.Name:lower():find(toolName:lower()) then
+            v.Parent = LocalPlayer.Backpack
         end
     end
 end
 
-function rlib.speed(s)
-    if plr.Character and plr.Character:FindFirstChild("Humanoid") then
-        plr.Character.Humanoid.WalkSpeed = s
-    end
-end
-
-function rlib.jump(pwr)
-    if plr.Character and plr.Character:FindFirstChild("Humanoid") then
-        plr.Character.Humanoid.JumpPower = pwr
-    end
-end
-
-function rlib.givetool(toolName)
-    local tool = game:GetService("InsertService"):LoadAsset(tonumber(toolName:match("%d+")))
-    if tool then
-        tool.Parent = plr.Backpack
-    end
-end
-
 function rlib.destroytools()
-    for _,v in pairs(plr.Backpack:GetChildren()) do
+    for _,v in ipairs(LocalPlayer.Backpack:GetChildren()) do
         if v:IsA("Tool") then v:Destroy() end
     end
-    if plr.Character then
-        for _,v in pairs(plr.Character:GetChildren()) do
-            if v:IsA("Tool") then v:Destroy() end
+end
+
+function rlib.dropAllTools()
+    for _,v in ipairs(LocalPlayer.Backpack:GetChildren()) do
+        if v:IsA("Tool") then v.Parent = workspace end
+    end
+end
+
+function rlib.gettools()
+    local t={}
+    for _,v in ipairs(LocalPlayer.Backpack:GetChildren()) do
+        if v:IsA("Tool") then table.insert(t,v.Name) end
+    end
+    return t
+end
+
+function rlib.clonetool(toolName)
+    for _,v in ipairs(LocalPlayer.Backpack:GetChildren()) do
+        if v:IsA("Tool") and v.Name:lower():find(toolName:lower()) then
+            v:Clone().Parent = LocalPlayer.Backpack
+        end
+    end
+end
+
+function rlib.Usetools()
+    for _,v in ipairs(LocalPlayer.Backpack:GetChildren()) do
+        if v:IsA("Tool") then pcall(function() v:Activate() end) end
+    end
+end
+
+function rlib.HoldTool(idx)
+    local tools = LocalPlayer.Backpack:GetChildren()
+    if tonumber(idx) and tools[tonumber(idx)] then
+        tools[tonumber(idx)].Parent = LocalPlayer.Character
+    else
+        for _,v in ipairs(tools) do
+            if v.Name:lower():find(tostring(idx):lower()) then
+                v.Parent = LocalPlayer.Character
+                break
+            end
+        end
+    end
+end
+
+function rlib.UnHoldTools()
+    for _,v in ipairs(LocalPlayer.Character:GetChildren()) do
+        if v:IsA("Tool") then v.Parent = LocalPlayer.Backpack end
+    end
+end
+
+-- Camera & Visuals
+function rlib.fov(v) workspace.CurrentCamera.FieldOfView = v end
+function rlib.firstperson() LocalPlayer.CameraMode = Enum.CameraMode.LockFirstPerson end
+function rlib.thirdperson() LocalPlayer.CameraMode = Enum.CameraMode.Classic end
+function rlib.nametag(txt)
+    local char = LocalPlayer.Character
+    if char then
+        local tag = char:FindFirstChild("Head") and char.Head:FindFirstChild("Nametag")
+        if not tag then
+            tag = Instance.new("BillboardGui", char.Head)
+            tag.Name = "Nametag"
+            tag.Size = UDim2.new(0,100,0,40)
+            tag.StudsOffset = Vector3.new(0,2,0)
+            tag.AlwaysOnTop = true
+            local label = Instance.new("TextLabel", tag)
+            label.Size = UDim2.new(1,0,1,0)
+            label.BackgroundTransparency = 1
+            label.TextColor3 = Color3.new(1,1,1)
+            label.TextStrokeTransparency = 0
+            label.Font = Enum.Font.SourceSansBold
+            label.TextScaled = true
+            label.Text = txt
+        else
+            tag.TextLabel.Text = txt
+        end
+    end
+end
+
+-- Chat & Communication
+function rlib.spamChat(txt, count, delay)
+    for i=1, count or 10 do
+        game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(txt, "All")
+        task.wait(delay or 0.2)
+    end
+end
+
+function rlib.chat(txt)
+    local tcs = game:GetService("TextChatService")
+    local channel = tcs.TextChannels:FindFirstChild("RBXGeneral")
+    if channel then
+        channel:SendAsync(txt)
+    end
+end
+
+function rlib.fakechat(txt, username)
+    print(username..": "..txt)
+end
+
+function rlib.getchat(amount)
+    -- Placeholder: Roblox doesn't provide direct chat log access
+    return {}
+end
+
+function rlib.chatspy(state)
+    -- Placeholder: needs hooking chat events
+end
+
+function rlib.chatlog(state)
+    -- Placeholder: needs hooking chat events
+end
+
+function rlib.webhook(txt, url)
+    -- Placeholder: send HTTP POST to webhook
+end
+
+function rlib.copypos()
+    local root = getRoot(LocalPlayer.Character)
+    if root then setclipboard(tostring(root.Position)) end
+end
+
+function rlib.userid(username)
+    for _,plr in ipairs(Players:GetPlayers()) do
+        if not username or plr.Name:lower():sub(1, #username) == username:lower() then
+            return plr.UserId
+        end
+    end
+end
+
+function rlib.placeid() return game.PlaceId end
+function rlib.placename() return game.Name end
+function rlib.serverid() return game.JobId end
+function rlib.joinserver(id) game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, id) end
+function rlib.getplayers()
+    local t = {}
+    for _,plr in ipairs(Players:GetPlayers()) do table.insert(t, plr.Name) end
+    return t
+end
+function rlib.rejoin() game:GetService("TeleportService"):Teleport(game.PlaceId, LocalPlayer) end
+function rlib.rj() rlib.rejoin() end
+function rlib.serverhop() game:GetService("TeleportService"):Teleport(game.PlaceId) end
+function rlib.shop() rlib.serverhop() end
+
+-- Dfling (originally made by malrous, made 900x better by me)
+function rlib.dfling(targetName)
+    local root = getRoot(LocalPlayer.Character)
+    if not root then return end
+    rlib._dflingOrigPos = root.CFrame
+    rlib._dflingOrigVel = root.Velocity
+
+    for _, child in pairs(LocalPlayer.Character:GetDescendants()) do
+        if child:IsA("BasePart") then
+            child.CustomPhysicalProperties = PhysicalProperties.new(math.huge, 0.3, 0.5)
+            child.Massless = true
+            child.CanCollide = false
+        end
+    end
+
+    rlib._dflingSpin = Instance.new("BodyAngularVelocity")
+    rlib._dflingSpin.Name = "DFlingSpin"
+    rlib._dflingSpin.Parent = root
+    rlib._dflingSpin.AngularVelocity = Vector3.new(0, 999999, 0)
+    rlib._dflingSpin.MaxTorque = Vector3.new(0, math.huge, 0)
+    rlib._dflingSpin.P = math.huge
+
+    rlib._dflingActive = true
+    local target = nil
+    for _,plr in ipairs(Players:GetPlayers()) do
+        if plr.Name:lower():sub(1, #targetName) == targetName:lower() then
+            target = plr
+            break
+        end
+    end
+    if not target or not target.Character or not getRoot(target.Character) then return end
+    local theirRoot = getRoot(target.Character)
+
+    -- Prediction loop
+    if rlib._dflingConn then rlib._dflingConn:Disconnect() end
+    rlib._dflingConn = RunService.Stepped:Connect(function()
+        if rlib._dflingActive and theirRoot and root then
+            pcall(function()
+                local ping = (LocalPlayer:GetNetworkPing() or 150) / 1000
+                local predictedPos = theirRoot.Position + theirRoot.Velocity * (ping + 0.1)
+                root.CFrame = CFrame.new(predictedPos)
+            end)
+        end
+    end)
+
+    if rlib._dflingVelBurst then rlib._dflingVelBurst:Disconnect() end
+    rlib._dflingVelBurst = RunService.RenderStepped:Connect(function()
+        if rlib._dflingActive and root then
+            for i = 1, 3 do
+                local bv = Instance.new("BodyVelocity")
+                bv.Velocity = Vector3.new(50000, 0, 0)
+                bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+                bv.P = 1e6
+                bv.Parent = root
+                game:GetService("Debris"):AddItem(bv, 0.15)
+            end
+        end
+    end)
+end
+
+function rlib.undfling()
+    rlib._dflingActive = false
+    if rlib._dflingConn then rlib._dflingConn:Disconnect() end
+    if rlib._dflingVelBurst then rlib._dflingVelBurst:Disconnect() end
+    if rlib._dflingSpin then rlib._dflingSpin:Destroy() end
+    local root = getRoot(LocalPlayer.Character)
+    if root then
+        root.CFrame = rlib._dflingOrigPos or root.CFrame
+        root.Velocity = rlib._dflingOrigVel or root.Velocity
+    end
+    for _, child in pairs(LocalPlayer.Character:GetDescendants()) do
+        if child:IsA("BasePart") then
+            child.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.3, 0.5)
+            child.Massless = false
+            child.CanCollide = true
         end
     end
 end
