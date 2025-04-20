@@ -4,12 +4,10 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- Helper: get root part
 local function getRoot(char)
     return char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso"))
 end
 
--- Helper: Accept Vector3 or numbers
 local function toVec3(a, b, c)
     if typeof(a) == "Vector3" then
         return a
@@ -20,7 +18,6 @@ local function toVec3(a, b, c)
     end
 end
 
--- Movement & Position
 function rlib.tppos(a, b, c)
     local root = getRoot(LocalPlayer.Character)
     if root then root.CFrame = CFrame.new(toVec3(a, b, c)) end
@@ -118,7 +115,6 @@ function rlib.novel(t)
     end
 end
 
--- Character & Physics
 function rlib.rot(x,y,z)
     local root = getRoot(LocalPlayer.Character)
     if root then root.CFrame = root.CFrame * CFrame.Angles(math.rad(x or 0), math.rad(y or 0), math.rad(z or 0)) end
@@ -159,7 +155,6 @@ function rlib.antiRagdoll(state)
     if hum then hum.PlatformStand = not state end
 end
 
--- Player Stats
 function rlib.walkspeed(v) local h=LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")if h then h.WalkSpeed=v end end
 function rlib.ws(v) rlib.walkspeed(v) end
 function rlib.jumppower(v) local h=LocalPlayer.Character and LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")if h then h.JumpPower=v end end
@@ -169,7 +164,6 @@ function rlib.fpslimit(v) setfpscap(v) end
 function rlib.fps() return math.floor(1/RunService.RenderStepped:Wait()) end
 function rlib.ping() return LocalPlayer:GetNetworkPing() or 0 end
 
--- Tools & Inventory
 function rlib.givetool(toolName)
     for _,v in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
         if v:IsA("Tool") and v.Name:lower():find(toolName:lower()) then
@@ -232,7 +226,6 @@ function rlib.UnHoldTools()
     end
 end
 
--- Camera & Visuals
 function rlib.fov(v) workspace.CurrentCamera.FieldOfView = v end
 function rlib.firstperson() LocalPlayer.CameraMode = Enum.CameraMode.LockFirstPerson end
 function rlib.thirdperson() LocalPlayer.CameraMode = Enum.CameraMode.Classic end
@@ -260,7 +253,6 @@ function rlib.nametag(txt)
     end
 end
 
--- Chat & Communication
 function rlib.spamChat(txt, count, delay)
     for i=1, count or 10 do
         game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(txt, "All")
@@ -293,7 +285,6 @@ end
 function rlib.webhook(txt, url)
 end
 
--- Info & Utility
 function rlib.copy(text)
     setclipboard(tostring(text))
 end
@@ -311,14 +302,12 @@ function rlib.getpos(target)
     end
 
     if typeof(target) == "string" then
-        -- Try as username
         for _,plr in ipairs(Players:GetPlayers()) do
             if plr.Name:lower():sub(1, #target) == target:lower() then
                 local root = getRoot(plr.Character)
                 return root and root.Position
             end
         end
-        -- Try as part name in your character
         local char = LocalPlayer.Character
         if char then
             local part = char:FindFirstChild(target)
