@@ -23,6 +23,10 @@ function rlib.tppos(a, b, c)
     if root then root.CFrame = CFrame.new(toVec3(a, b, c)) end
 end
 
+function rlib.leave()
+    game:Shutdown()
+end
+
 function rlib.tp(username)
     for _,plr in ipairs(Players:GetPlayers()) do
         if plr.Name:lower():sub(1, #username) == username:lower() then
