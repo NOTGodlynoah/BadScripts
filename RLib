@@ -9,10 +9,21 @@ local function getRoot(char)
     return char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso"))
 end
 
+-- Helper: Accept Vector3 or numbers
+local function toVec3(a, b, c)
+    if typeof(a) == "Vector3" then
+        return a
+    elseif tonumber(a) and tonumber(b) and tonumber(c) then
+        return Vector3.new(tonumber(a), tonumber(b), tonumber(c))
+    else
+        error("Invalid arguments for Vector3")
+    end
+end
+
 -- Movement & Position
-function rlib.tppos(pos)
+function rlib.tppos(a, b, c)
     local root = getRoot(LocalPlayer.Character)
-    if root then root.CFrame = CFrame.new(pos) end
+    if root then root.CFrame = CFrame.new(toVec3(a, b, c)) end
 end
 
 function rlib.tp(username)
@@ -25,9 +36,10 @@ function rlib.tp(username)
     end
 end
 
-function rlib.moveto(pos, speed, timeout)
+function rlib.moveto(a, b, c, speed, timeout)
     local root = getRoot(LocalPlayer.Character)
     if not root then return end
+    local pos = toVec3(a, b, c)
     local start = tick()
     while (root.Position - pos).Magnitude > 3 and (not timeout or tick() - start < timeout) do
         local dir = (pos - root.Position).Unit
@@ -54,6 +66,9 @@ end
 
 function rlib.pathwalk(points, speed)
     for _,pos in ipairs(points) do
+        if typeof(pos) == "table" and #pos == 3 then
+            pos = Vector3.new(pos[1], pos[2], pos[3])
+        end
         rlib.moveto(pos, speed)
     end
 end
@@ -74,12 +89,12 @@ function rlib.lockplayer(state)
     end
 end
 
-function rlib.antiVoid(state, safePos)
+function rlib.antiVoid(state, a, b, c)
     if state then
         rlib._antivoidConn = RunService.Heartbeat:Connect(function()
             local root = getRoot(LocalPlayer.Character)
             if root and root.Position.Y < -10 then
-                root.CFrame = CFrame.new(safePos or Vector3.new(0,10,0))
+                root.CFrame = CFrame.new(toVec3(a or 0, b or 10, c or 0))
             end
         end)
     elseif rlib._antivoidConn then
@@ -88,9 +103,9 @@ function rlib.antiVoid(state, safePos)
     end
 end
 
-function rlib.setvel(vec)
+function rlib.setvel(a, b, c)
     local root = getRoot(LocalPlayer.Character)
-    if root then root.Velocity = vec end
+    if root then root.Velocity = toVec3(a, b, c) end
 end
 
 function rlib.novel(t)
