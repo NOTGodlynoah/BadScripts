@@ -294,10 +294,70 @@ function rlib.webhook(txt, url)
 end
 
 -- Info & Utility
-function rlib.copypos()
-    local root = getRoot(LocalPlayer.Character)
-    if root then setclipboard(tostring(root.Position)) end
+function rlib.copy(text)
+    setclipboard(tostring(text))
 end
+
+function rlib.getpos(target)
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+    local function getRoot(char)
+        return char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso"))
+    end
+
+    if not target then
+        local root = getRoot(LocalPlayer.Character)
+        return root and root.Position
+    end
+
+    if typeof(target) == "string" then
+        -- Try as username
+        for _,plr in ipairs(Players:GetPlayers()) do
+            if plr.Name:lower():sub(1, #target) == target:lower() then
+                local root = getRoot(plr.Character)
+                return root and root.Position
+            end
+        end
+        -- Try as part name in your character
+        local char = LocalPlayer.Character
+        if char then
+            local part = char:FindFirstChild(target)
+            if part and part:IsA("BasePart") then
+                return part.Position
+            end
+        end
+    elseif typeof(target) == "table" then
+        local char = LocalPlayer.Character
+        local positions = {}
+        for _,name in ipairs(target) do
+            if char then
+                local part = char:FindFirstChild(name)
+                if part and part:IsA("BasePart") then
+                    table.insert(positions, part.Position)
+                end
+            end
+        end
+        return positions
+    end
+end
+
+function rlib.getclosest(...)
+    local args = {...}
+    local root = (game.Players.LocalPlayer.Character and (game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or game.Players.LocalPlayer.Character:FindFirstChild("Torso")))
+    if not root then return end
+    local closest, minDist
+    for _,pos in ipairs(args) do
+        if typeof(pos) == "Vector3" then
+            local dist = (root.Position - pos).Magnitude
+            if not minDist or dist < minDist then
+                minDist = dist
+                closest = pos
+            end
+        end
+    end
+    return closest
+end
+
 
 function rlib.userid(username)
     for _,plr in ipairs(Players:GetPlayers()) do
