@@ -230,6 +230,7 @@ function rlib.UnHoldTools()
     end
 end
 
+-- rendering and camera stuff
 function rlib.fov(v) workspace.CurrentCamera.FieldOfView = v end
 function rlib.firstperson() LocalPlayer.CameraMode = Enum.CameraMode.LockFirstPerson end
 function rlib.thirdperson() LocalPlayer.CameraMode = Enum.CameraMode.Classic end
@@ -257,6 +258,47 @@ function rlib.nametag(txt)
     end
 end
 
+function rlib.norender(enable)
+    local RunService = game:GetService("RunService")
+    local Lighting = game:GetService("Lighting")
+    local SoundService = game:GetService("SoundService")
+    local Workspace = game:GetService("Workspace")
+    local setfpscap = setfpscap or function() end
+
+    if enable then
+        pcall(function() RunService:Set3dRenderingEnabled(false) end)
+        pcall(function() setfpscap(10) end)
+        for _,v in ipairs(Lighting:GetChildren()) do
+            if v:IsA("PostEffect") or v:IsA("Atmosphere") or v:IsA("Sky") then
+                v.Parent = nil
+            end
+        end
+        pcall(function() Lighting.GlobalShadows = false end)
+        pcall(function() Lighting.FogEnd = 1e9 end)
+        pcall(function() Lighting.Brightness = 0 end)
+        pcall(function() Lighting.OutdoorAmbient = Color3.new(0,0,0) end)
+        pcall(function() Lighting.ClockTime = 14 end)
+        for _,s in ipairs(SoundService:GetDescendants()) do
+            if s:IsA("Sound") then s.Volume = 0 end
+        end
+        pcall(function() SoundService.RespectFilteringEnabled = true end)
+        for _,v in ipairs(Workspace:GetDescendants()) do
+            if v:IsA("ParticleEmitter") or v:IsA("Beam") or v:IsA("Trail") then
+                v.Enabled = false
+            elseif v:IsA("VideoFrame") then
+                v.Playing = false
+            end
+        end
+    else
+        pcall(function() RunService:Set3dRenderingEnabled(true) end)
+        pcall(function() setfpscap(60) end)
+        for _,s in ipairs(SoundService:GetDescendants()) do
+            if s:IsA("Sound") then s.Volume = 1 end
+        end
+    end
+end
+
+
 function rlib.spamChat(txt, count, delay)
     for i=1, count or 10 do
         game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(txt, "All")
@@ -272,22 +314,20 @@ function rlib.chat(txt)
     end
 end
 
-function rlib.fakechat(txt, username)
-    print(username..": "..txt)
-end
+-- WIP, NOT DONE YET.
+--function rlib.getchat(amount)
+--    return {}
+--end
 
-function rlib.getchat(amount)
-    return {}
-end
+--function rlib.chatspy(state)
+--end
 
-function rlib.chatspy(state)
-end
+--function rlib.chatlog(state)
+--end
 
-function rlib.chatlog(state)
-end
-
-function rlib.webhook(txt, url)
-end
+--function rlib.webhook(txt, url)
+--end
+-- WIP, NOT DONE YET.
 
 function rlib.copy(text)
     setclipboard(tostring(text))
