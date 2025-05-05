@@ -8,7 +8,7 @@
 for i = 0, rebirths do
 game:GetService("ReplicatedStorage").Packages.Knit.Services.EconomyService.RF.RegisterBall:InvokeServer(math.huge)
 game:GetService("ReplicatedStorage").Packages.Knit.Services.RebirthService.RF.Rebirth:InvokeServer()
-task.wait(2.5)
+task.wait(3)
 end
 
 game:GetService("ReplicatedStorage").Packages.Knit.Services.EconomyService.RF.RegisterBall:InvokeServer(money)
