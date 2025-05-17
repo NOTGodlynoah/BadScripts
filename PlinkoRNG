@@ -5,7 +5,6 @@
 -- local money = 5000000 -- How much money to get. (Happens AFTER rebirths if rebirths are not 0)
 -- (the loadstring here)
 
-task.wait(3)
 for i = 1, rebirths do
 game:GetService("ReplicatedStorage").Packages.Knit.Services.EconomyService.RF.RegisterBall:InvokeServer(math.huge)
 game:GetService("ReplicatedStorage").Packages.Knit.Services.RebirthService.RF.Rebirth:InvokeServer()
