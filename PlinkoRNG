@@ -11,4 +11,11 @@ game:GetService("ReplicatedStorage").Packages.Knit.Services.RebirthService.RF.Re
 task.wait(3)
 end
 
+for i = 1, drops do
+    task.spawn(function()
+        game:GetService("ReplicatedStorage").Packages.Knit.Services.EconomyService.RF.RemoveCash:InvokeServer(0.1)
+    end)
+    task.wait()
+end
+
 game:GetService("ReplicatedStorage").Packages.Knit.Services.EconomyService.RF.RegisterBall:InvokeServer(money)
