@@ -374,22 +374,38 @@ function rlib.getpos(target)
     end
 end
 
-function rlib.getclosest(...)
-    local args = {...}
-    local root = (game.Players.LocalPlayer.Character and (game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or game.Players.LocalPlayer.Character:FindFirstChild("Torso")))
-    if not root then return end
-    local closest, minDist
-    for _,pos in ipairs(args) do
-        if typeof(pos) == "Vector3" then
-            local dist = (root.Position - pos).Magnitude
-            if not minDist or dist < minDist then
-                minDist = dist
-                closest = pos
+function rlib.getclosest(list, pos, filter, ret)
+    if not pos then
+        local lp = game:GetService("Players").LocalPlayer
+        local char = lp and lp.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        pos = hrp and hrp.Position or Vector3.new(0,0,0)
+    end
+
+    local closest, closestPos, dist = nil, nil, math.huge
+    for _, v in ipairs(list) do
+        local p
+        if v:IsA("BasePart") then
+            p = v.Position
+        elseif v:IsA("Model") and v.PrimaryPart then
+            p = v.PrimaryPart.Position
+        elseif v:IsA("Model") and v:GetPivot() then
+            p = v:GetPivot().Position
+        end
+        if p and (not filter or filter(v)) then
+            local d = (p - pos).Magnitude
+            if d < dist then
+                closest, closestPos, dist = v, p, d
             end
         end
     end
-    return closest
+    if (ret or "obj") == "pos" then
+        return closestPos
+    else
+        return closest
+    end
 end
+
 
 
 function rlib.userid(username)
