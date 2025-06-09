@@ -475,9 +475,8 @@ function RLib.downloadAsset(id) if syn and syn.request then return syn.request({
 -- obfuscation and encryption stuffs
 function RLib.obfuscateString(str) local result = "" for i = 1, #str do result = result .. string.char(str:byte(i) + 1) end return result end
 function RLib.deobfuscateString(str) local result = "" for i = 1, #str do result = result .. string.char(str:byte(i) - 1) end return result end
-function RLib.encodeBase64(str) local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/" local result = "" for i = 1, #str, 3 do local b1, b2, b3 = str:byte(i, i+2) local bitmap = (b1 << 16) + ((b2 or 0) << 8) + (b3 or 0) result = result .. chars:sub((bitmap >> 18) + 1, (bitmap >> 18) + 1) .. chars:sub(((bitmap >> 12) & 63) + 1, ((bitmap >> 12) & 63) + 1) .. (b2 and chars:sub(((bitmap >> 6) & 63) + 1, ((bitmap >> 6) & 63) + 1) or "=") .. (b3 and chars:sub((bitmap & 63) + 1, (bitmap & 63) + 1) or "=") end return result end
-function RLib.hashString(str) local hash = 0 for i = 1, #str do hash = ((hash << 5) - hash + str:byte(i)) & 0xFFFFFFFF end return hash end
-function RLib.xorEncrypt(str, key) local result = "" for i = 1, #str do result = result .. string.char(str:byte(i) ~ key:byte(((i-1) % #key) + 1)) end return result end
+--function RLib.hashString(str) local hash = 0 for i = 1, #str do hash = ((hash << 5) - hash + str:byte(i)) & 0xFFFFFFFF end return hash end
+--function RLib.xorEncrypt(str, key) local result = "" for i = 1, #str do result = result .. string.char(str:byte(i) ~ key:byte(((i-1) % #key) + 1)) end return result end
 function RLib.xorDecrypt(str, key) return RLib.xorEncrypt(str, key) end
 function RLib.generateKey(len) return RLib.randomString(len or 32) end
 function RLib.validateKey(key, expected) return key == expected end
@@ -511,4 +510,3 @@ function RLib.createAlias(original, alias) RLib[alias] = RLib[original] end
 function RLib.version() return "3.1" end
 
 return RLib
-
