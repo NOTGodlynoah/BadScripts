@@ -1,5 +1,5 @@
 -- RLib v3.1 Ultimate - Made by NOTGodlynoah
--- Join discord.gg/asu for epic scripts!
+-- Join discord.gg/CJMeF8CW78 for epic scripts!
 local RLib = {}
 local Players, RunService, UserInputService, TweenService, HttpService, Workspace, Lighting, SoundService, StarterGui, TeleportService, Teams, PathfindingService, VirtualInputManager, Camera, ReplicatedStorage, MarketplaceService, GuiService, TextService, Chat, Debris = game:GetService("Players"), game:GetService("RunService"), game:GetService("UserInputService"), game:GetService("TweenService"), game:GetService("HttpService"), game:GetService("Workspace"), game:GetService("Lighting"), game:GetService("SoundService"), game:GetService("StarterGui"), game:GetService("TeleportService"), game:GetService("Teams"), game:GetService("PathfindingService"), game:GetService("VirtualInputManager"), Workspace.CurrentCamera, game:GetService("ReplicatedStorage"), game:GetService("MarketplaceService"), game:GetService("GuiService"), game:GetService("TextService"), game:GetService("Chat"), game:GetService("Debris")
 local LocalPlayer = Players.LocalPlayer
