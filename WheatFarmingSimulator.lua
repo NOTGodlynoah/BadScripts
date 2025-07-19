@@ -8,7 +8,7 @@
 
 -- // Made By: NOTGodlynoah \\
 -- // Join the Discord at \\
--- // discord.gg/asu \\
+-- // discord.gg/CJMeF8CW78 \\
 -- // Made for: roblox.com/games/10106105124 \\
 
 -- How to use:
