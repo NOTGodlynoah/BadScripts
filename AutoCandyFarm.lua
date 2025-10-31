@@ -18,6 +18,16 @@
 
 ]]
 
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
+if getgenv().CANDY_LOOP == true then --// anti run twice
+    return
+else
+    getgenv().CANDY_LOOP = true
+end
+
 -- Noahs dum server hopping/saving api stuff to make it more efficent
 local wsFolder="candyfarm"local apiFile=wsFolder.."/lastapi.txt"
 if not isfolder(wsFolder)then makefolder(wsFolder)end local HttpService=game:GetService("HttpService")
@@ -31,16 +41,6 @@ local canHop={}for _,s in ipairs(serverList)do if not Blklist[s.id]and s.playing
 apiData.servers[curId]={VisCount=10,playercount=#game.Players:GetPlayers(),serverid=curId}
 sApiData(apiData)
 -- end of most of my additions ig (might be a bit hard to read sorry, just how i code)
-
-if not game:IsLoaded() then
-    game.Loaded:Wait()
-end
-
-if getgenv().CANDY_LOOP == true then --// anti run twice
-    return
-else
-    getgenv().CANDY_LOOP = true
-end
 
 --// Services
 local Players = game:GetService("Players")
