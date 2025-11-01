@@ -1,4 +1,4 @@
---[[ THIS SCRIPT IS A SOMEWHAT SHITTY PART OF THIS SCRIPT: loadstring(game:HttpGet('https://raw.githubusercontent.com/TheRealAsu/BABFT/refs/heads/main/CandyFarm.lua'))()
+--[[ THIS SCRIPT IS A SOMEWHAT SHITTY RECRETION OF A PART OF THIS SCRIPT: loadstring(game:HttpGet('https://raw.githubusercontent.com/TheRealAsu/BABFT/refs/heads/main/CandyFarm.lua'))()
 
                 ,_
                  :`.            .--//._
@@ -17,12 +17,12 @@
                   love you all <3
 
 ]]
-
+--// This script was made by ASU, with a few improvements on the server hopping method added by me.
 if not game:IsLoaded() then
     game.Loaded:Wait()
 end
 
-if getgenv().CANDY_LOOP == true then --// anti run twice
+if getgenv().CANDY_LOOP == true then --// Anti run twice
     return
 else
     getgenv().CANDY_LOOP = true
@@ -35,7 +35,7 @@ local PlayerGui = player:WaitForChild("PlayerGui")
 local StarterGui = game:GetService("StarterGui")
 local RunService = game:GetService("RunService")
 
---// vars
+--// Vars
 local character = player.Character or player.CharacterAdded:Wait()
 local hrp = character:WaitForChild("HumanoidRootPart")
 local Houses = workspace:WaitForChild("Houses")
@@ -74,7 +74,6 @@ local function Force(part, ws)
         if ws ~= 0 then
             character:WaitForChild("Humanoid").WalkSpeed = ws
         end
-
     end)
 end
 
@@ -97,7 +96,6 @@ local function AutoFarm()
             sdf:Destroy()
         end
     end
-
 end
 
 AutoFarm()
@@ -132,9 +130,9 @@ if a ~= 0 then
 end
 wait(2)
 
---// shop and handle shop error
+--// Server hop and handling shop errors
 StarterGui:SetCore("SendNotification", {
-    Title = "Candy Farm - Asu",
+    Title = "Candy Farm - NOTGod",
     Text = "Server Hopping...",
     Icon = "rbxassetid://7781288646", 
     Duration = 3
@@ -145,7 +143,7 @@ local PlaceId = game.PlaceId
 local HttpService = cloneref(game:GetService("HttpService"))
 local TeleportService = cloneref(game:GetService("TeleportService"))
 
-function missing(t, f, fallback) --// IY shop and queueteleport
+function missing(t, f, fallback) --// IY shop and queueteleport as fallback
     if type(f) == t then return f end
     return fallback
 end
@@ -153,7 +151,7 @@ end
 queueteleport =  missing("function", queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport) or queueonteleport)
 httprequest =  missing("function", request or http_request or (syn and syn.request) or (http and http.request) or (fluxus and fluxus.request))
 
--- Noahs dum server hopping/saving api stuff to make it more efficent
+-- Noahs dum server hopping/saving api stuff to make it more efficient
 local wsFolder="candyfarm"local apiFile=wsFolder.."/lastapi.txt"
 if not isfolder(wsFolder)then makefolder(wsFolder)end 
 local function lApiData()if isfile(apiFile)then return HttpService:JSONDecode(readfile(apiFile))else writefile(apiFile,HttpService:JSONEncode({servers={}}))return{servers={}}end end
@@ -194,7 +192,7 @@ local function Shop()
     if #servers == 0 then
         StarterGui:SetCore("SendNotification", {
           Title = "Candy Farm - Asu",
-          Text = "No server found, retry in 5 seconds",
+          Text = "No server found, retrying in 5 seconds (NOTGOD SUCKS AT CODING)",
           Icon = "rbxassetid://7781250539", 
           Duration = 4
         })
@@ -209,11 +207,11 @@ local function Shop()
     if not success then
         StarterGui:SetCore("SendNotification", {
           Title = "Candy Farm - Asu",
-          Text = "Failed to Server Hop, retry in 5 seconds",
+          Text = "Failed to Server Hop, retrying in 2 seconds (NOTGOD SUCKS AT CODING)",
           Icon = "rbxassetid://7781250539", 
           Duration = 4
         })
-        task.wait(5)
+        task.wait(2)
         Shop()
     end
 end
@@ -222,11 +220,11 @@ TeleportService.TeleportInitFailed:Connect(function(player, errorMessage)
     if player == Players.LocalPlayer then
         StarterGui:SetCore("SendNotification", {
             Title = "Candy Farm - Asu",
-            Text = "Server full, retry in 5 seconds",
+            Text = "Server full, retrying in 2 seconds (NOTGOD SUCKS AT CODING)",
             Icon = "rbxassetid://7781250539",
             Duration = 4
         })
-        task.wait(5)
+        task.wait(2)
         Shop()
     end
 end)
