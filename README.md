@@ -1,3 +1,4 @@
 # BadScripts
-Trash scripts I made for roblox
-please take them with less than a grain of salt.
+Self explanitory name.
+Garbage scripts I make for roblox and other lua stuff.
+DONT RUN ANYTHING IN THE DESTRUCTIVE FOLDER UNLESS YOU KNOW WHAT YOU ARE DOING
